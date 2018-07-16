@@ -28,7 +28,7 @@ def keyup_event(event,ship):
 	elif event.key == pygame.K_LEFT:
 		ship.moving_left = False
 
-def check_events(ai_settings,screen,stats,play_button,ship,bullets):
+def check_events(ai_settings,screen,stats,play_button,ship,aliens,bullets):
 	for event in pygame.event.get():   #事件循环
 		if event.type == pygame.QUIT:  #如果事件是退出事件，则退出系统
 			sys.exit()
@@ -39,15 +39,27 @@ def check_events(ai_settings,screen,stats,play_button,ship,bullets):
 		elif event.type == pygame.KEYUP:
 			keyup_event(event,ship)
 		
-		'''获取点击坐标,并进行对比'''
+		#点击按钮开始
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			mouse_x,mouse_y =  pygame.mouse.get_pos()
-			check_play_button(stats,play_button,mouse_x,mouse_y)
+			check_play_button(ai_settings,screen,stats,play_button,ship,aliens,bullets,mouse_x,mouse_y)
 
 '''对点击的坐标与按钮进行对比'''
-def check_play_button(stats,play_button,mouse_x,mouse_y):
-	if play_button.rect.collidepoint(mouse_x,mouse_y):
+def check_play_button(ai_settings,screen,stats,play_button,ship,aliens,bullets,mouse_x,mouse_y):
+	button_chacked = play_button.rect.collidepoint(mouse_x,mouse_y)  #判断鼠标坐标是否是在矩形内,返回的值为true或者false
+	if button_chacked and not stats.game_active:  #只有在按键范围内且游戏状态为false的时候点击才有效
+		ai_settings.initilize_dynamic_settings()
+		pygame.mouse.set_visible(False)  #设置鼠标不可见
+		stats.reset_stats()  #重置游戏设置
 		stats.game_active = True
+		
+		aliens.empty()
+		bullets.empty() #清空外星人和子弹
+		
+		creat_fleet(ai_settings,screen,ship,aliens)
+		ship.center_ship()  #创建外星人群和把飞船移动至中间
+		
+		
 
 def update_screen(ai_settings,screen,stats,ship,bullets,aliens,play_button):
 	'''每次循环都重绘屏幕'''
@@ -79,6 +91,7 @@ def check_bullet_alien_collisions(ai_settings,screen,ship,aliens,bullets):
 	 
 	if len(aliens) == 0:
 		bullets.empty()  #清空所有子弹
+		ai_settings.increase_speed()  #增加速度
 		creat_fleet(ai_settings,screen,ship,aliens)
 
 '''发射子弹的代码'''
@@ -140,6 +153,7 @@ def ship_hit(ai_settings,stats,screen,ship,aliens,bullets):
 		sleep(0.5)  #暂停0.5秒
 	else:
 		stats.game_active = False
+		pygame.mouse.set_visible(True)  #在当游戏结束时，鼠标光标可见
 
 def check_fleet_deges(ai_settings,aliens):
 	'''当外星人到达边缘是采取措施'''
